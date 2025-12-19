@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Advanced Chart Analysis Tool - SMC</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --dark-surface: rgba(15, 23, 42, 0.95);
+            --glass-surface: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            background-image: 
+                radial-gradient(circle at 25% 25%, #1e293b 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, #334155 0%, transparent 50%),
+                linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2.5rem;
+            background: var(--glass-surface);
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .upload-section, .analysis-section {
+            background: var(--glass-surface);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--glass-border);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .analysis-results {
+            margin-top: 2rem;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .result-symbol {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .result-time {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .analysis-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+        }
+
+        .analysis-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .analysis-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .direction-up {
+            color: var(--accent-green);
+        }
+
+        .direction-down {
+            color: var(--accent-red);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--accent-blue);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--accent-red);
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--accent-green);
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+
+        .smc-section, .trend-section {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .smc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .smc-item {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        .smc-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .smc-status {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .smc-details {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .trend-section {
+            background: rgba(16, 185, 129, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .factors-list {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+        }
+
+        .factors-list ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .factors-list li {
+            padding: 0.2rem 0;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .factors-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+
+        .trading-signal {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .trading-signal .success-message {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            border: 2px solid var(--accent-green);
+            padding: 1.5rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+
+            .smc-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .analysis-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-brain"></i> Advanced SMC Chart Analyzer</h1>
+            <p>Upload your trading charts and get comprehensive Smart Money Concepts analysis including Market Structure Shift, Order Blocks, QMLR, Fair Value Gaps, Liquidity Analysis, and trend continuation predictions</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <h2 class="section-title">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    Upload Chart
+                </h2>
+                
+                <form id="chartUploadForm" enctype="multipart/form-data">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <h3>Drop your chart image here (Required)</h3>
+                        <p>or click to browse files</p>
+                        <p style="font-size: 0.85rem; color: var(--accent-red); margin-top: 0.5rem;">
+                            ⚠️ Chart image upload is required for analysis
+                        </p>
+                        <input type="file" id="chartFile" name="chart_image" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="symbol">Trading Symbol</label>
+                        <input type="text" id="symbol" name="symbol" class="form-control" placeholder="e.g., EURUSD, GBPUSD" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="timeframe">Timeframe</label>
+                        <select id="timeframe" name="timeframe" class="form-control">
+                            <option value="15m">15 Minutes</option>
+                            <option value="1h" selected>1 Hour</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                        <i class="fas fa-search"></i>
+                        Analyze Chart
+                    </button>
+                    
+                    <button type="button" class="btn" onclick="window.chartAnalyzer.forceAnalysis()" style="margin-left: 10px; background: #dc3545; font-size: 0.9rem;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Force Analysis (Debug)
+                    </button>
+                </form>
+                
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner"></div>
+                    <p>Analyzing uploaded chart with SMC patterns...</p>
+                </div>
+            </div>
+
+            <!-- Analysis Results Section -->
+            <div class="analysis-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Analysis Results
+                </h2>
+                
+                <div id="analysisResults">
+                    <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                        Upload a trading chart image and enter symbol to see SMC analysis results
+                        <br><br>
+                        � <<strong>Analysis Process:</strong>
+                        <br>• Upload your chart image (PNG, JPG, BMP)
+                        <br>• Visual pattern recognition on chart
+                        <br>• Real-time price data integration
+                        <br>• Comprehensive SMC analysis with 11 factors
+                        <br>• Combined visual + real-time prediction
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Analyses -->
+        <div class="upload-section">
+            <h2 class="section-title">
+                <i class="fas fa-history"></i>
+                Recent Analyses
+            </h2>
+            <div id="recentAnalyses">
+                <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                    No analyses yet
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ChartAnalyzer {
+            constructor() {
+                this.initializeEventListeners();
+                this.loadRecentAnalyses();
+            }
+
+            initializeEventListeners() {
+                console.log('🔧 Initializing event listeners...');
+                
+                const uploadArea = document.getElementById('uploadArea');
+                const fileInput = document.getElementById('chartFile');
+                const form = document.getElementById('chartUploadForm');
+
+                // Verify all elements exist
+                if (!uploadArea || !fileInput || !form) {
+                    console.error('❌ Critical elements missing:', {
+                        uploadArea: !!uploadArea,
+                        fileInput: !!fileInput,
+                        form: !!form
+                    });
+                    return;
+                }
+
+                console.log('✅ All form elements found, setting up listeners');
+
+                // Attach file input listeners using the new method
+                this.attachFileInputListeners();
+
+                // Drag and drop
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('dragover');
+                });
+
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('dragover');
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files && files.length > 0) {
+                        try {
+                            const currentFileInput = document.getElementById('chartFile');
+                            if (currentFileInput) {
+                                const dt = new DataTransfer();
+                                dt.items.add(files[0]);
+                                currentFileInput.files = dt.files;
+                                this.updateUploadArea(files[0]);
+                                console.log('📎 File dropped and set:', files[0].name);
+                            }
+                        } catch (error) {
+                            console.error('❌ Error setting dropped file:', error);
+                        }
+                    }
+                });
+
+                // Form submit - enhanced with better error handling
+                form.addEventListener('submit', (e) => {
+                    console.log('📝 Form submit event triggered');
+                    e.preventDefault();
+                    console.log('� Defa ult form submission prevented');
+                    
+                    // Add small delay to ensure all elements are ready
+                    setTimeout(() => {
+                        this.uploadAndAnalyze();
+                    }, 100);
+                });
+
+                console.log('✅ All event listeners initialized successfully');
+            }
+
+            updateUploadArea(file) {
+                const uploadArea = document.getElementById('uploadArea');
+                const fileInput = document.getElementById('chartFile');
+                
+                console.log('📁 Updating upload area with file:', {
+                    fileName: file.name,
+                    fileSize: file.size,
+                    fileType: file.type,
+                    fileInputFiles: fileInput && fileInput.files ? fileInput.files.length : 0
+                });
+                
+                // IMPORTANT: Preserve the file input element by not replacing innerHTML
+                // Instead, update only the visual elements
+                uploadArea.innerHTML = `
+                    <div class="upload-icon">
+                        <i class="fas fa-check-circle" style="color: var(--accent-green);"></i>
+                    </div>
+                    <h3>${file.name}</h3>
+                    <p>File ready for analysis</p>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                        Size: ${(file.size / 1024 / 1024).toFixed(2)} MB | Type: ${file.type}
+                    </p>
+                    <input type="file" id="chartFile" name="chart_image" accept="image/*" style="display: none;">
+                `;
+                
+                // Re-attach the file to the new input element
+                const newFileInput = document.getElementById('chartFile');
+                if (newFileInput && fileInput && fileInput.files && fileInput.files.length > 0) {
+                    // Create a new FileList with the uploaded file
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    newFileInput.files = dt.files;
+                    console.log('✅ File re-attached to new input element');
+                }
+                
+                // Re-attach event listeners
+                this.attachFileInputListeners();
+                
+                // Add debug button for testing
+                const debugBtn = document.createElement('button');
+                debugBtn.type = 'button';
+                debugBtn.className = 'btn';
+                debugBtn.style.cssText = 'background: #17a2b8; margin-top: 10px; font-size: 0.8rem; padding: 5px 10px;';
+                debugBtn.innerHTML = '<i class="fas fa-bug"></i> Debug File State';
+                debugBtn.onclick = () => this.debugFileState();
+                uploadArea.appendChild(debugBtn);
+            }
+            
+            attachFileInputListeners() {
+                const fileInput = document.getElementById('chartFile');
+                const uploadArea = document.getElementById('uploadArea');
+                
+                if (!fileInput || !uploadArea) return;
+                
+                // Remove existing listeners to avoid duplicates
+                fileInput.removeEventListener('change', this.handleFileChange);
+                uploadArea.removeEventListener('click', this.handleUploadClick);
+                
+                // Re-attach listeners
+                this.handleFileChange = (e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                        this.updateUploadArea(e.target.files[0]);
+                    }
+                };
+                
+                this.handleUploadClick = () => {
+                    if (fileInput) fileInput.click();
+                };
+                
+                fileInput.addEventListener('change', this.handleFileChange);
+                uploadArea.addEventListener('click', this.handleUploadClick);
+            }
+            
+            debugFileState() {
+                const fileInput = document.getElementById('chartFile');
+                console.log('🐛 DEBUG: File input state:', {
+                    element: !!fileInput,
+                    id: fileInput ? fileInput.id : 'N/A',
+                    value: fileInput ? fileInput.value : 'N/A',
+                    files: fileInput && fileInput.files ? Array.from(fileInput.files).map(f => ({
+                        name: f.name,
+                        size: f.size,
+                        type: f.type
+                    })) : 'No files',
+                    filesLength: fileInput && fileInput.files ? fileInput.files.length : 0
+                });
+                
+                alert(`File Input Debug:
+Element exists: ${!!fileInput}
+Files count: ${fileInput && fileInput.files ? fileInput.files.length : 0}
+Value: ${fileInput ? fileInput.value : 'N/A'}
+${fileInput && fileInput.files && fileInput.files.length > 0 ? 
+  `First file: ${fileInput.files[0].name} (${fileInput.files[0].size} bytes)` : 
+  'No files detected'}`);
+            }
+            
+            async forceAnalysis() {
+                console.log('🚨 FORCE ANALYSIS - Bypassing file validation for debugging');
+                
+                const fileInput = document.getElementById('chartFile');
+                const symbolInput = document.getElementById('symbol');
+                const timeframeInput = document.getElementById('timeframe');
+                
+                if (!symbolInput || !symbolInput.value.trim()) {
+                    this.showMessage('Please enter a trading symbol first.', 'error');
+                    return;
+                }
+                
+                // Try to get the file even if validation failed
+                let selectedFile = null;
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    selectedFile = fileInput.files[0];
+                    console.log('🔧 Found file for force analysis:', selectedFile.name);
+                } else {
+                    console.log('🔧 No file found, will attempt API call anyway');
+                }
+                
+                const formData = new FormData();
+                if (selectedFile) {
+                    formData.append('chart_image', selectedFile);
+                }
+                formData.append('symbol', symbolInput.value.trim().toUpperCase());
+                formData.append('timeframe', timeframeInput.value || '1h');
+                
+                try {
+                    const response = await fetch('/api/upload-chart-analysis/', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': this.getCSRFToken()
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        console.log('✅ Force analysis successful');
+                        this.displaySimpleAnalysisResult(data);
+                        this.showMessage('Force analysis completed!', 'success');
+                    } else {
+                        console.log('❌ Force analysis failed:', data);
+                        this.showMessage('Force analysis failed: ' + (data.error || 'Unknown error'), 'error');
+                    }
+                } catch (error) {
+                    console.error('❌ Force analysis error:', error);
+                    this.showMessage('Force analysis error: ' + error.message, 'error');
+                }
+            }
+
+            async uploadAndAnalyze() {
+                console.log('🚀 uploadAndAnalyze function called');
+                
+                // Get elements with enhanced error checking
+                const form = document.getElementById('chartUploadForm');
+                const fileInput = document.getElementById('chartFile');
+                const symbolInput = document.getElementById('symbol');
+                const timeframeInput = document.getElementById('timeframe');
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                const analyzeBtn = document.getElementById('analyzeBtn');
+
+                console.log('📋 Form elements status:', {
+                    form: !!form,
+                    fileInput: !!fileInput,
+                    symbolInput: !!symbolInput,
+                    timeframeInput: !!timeframeInput,
+                    loadingIndicator: !!loadingIndicator,
+                    analyzeBtn: !!analyzeBtn
+                });
+
+                // Check for critical missing elements
+                if (!symbolInput || !timeframeInput) {
+                    console.error('❌ Critical form elements missing');
+                    alert('Form elements not found. Please refresh the page.');
+                    return;
+                }
+
+                // Validate symbol input
+                const symbolValue = symbolInput.value ? symbolInput.value.trim() : '';
+                if (!symbolValue) {
+                    console.log('❌ No symbol provided');
+                    this.showMessage('Please enter a trading symbol (e.g., EURUSD, GBPUSD).', 'error');
+                    return;
+                }
+
+                console.log('✅ Symbol validation passed:', symbolValue);
+
+                // REQUIRE chart file upload with enhanced debugging
+                let hasFile = false;
+                let selectedFile = null;
+                
+                console.log('🔍 Debugging file input:', {
+                    fileInputExists: !!fileInput,
+                    fileInputId: fileInput ? fileInput.id : 'N/A',
+                    fileInputValue: fileInput ? fileInput.value : 'N/A',
+                    filesProperty: fileInput ? !!fileInput.files : false,
+                    filesLength: fileInput && fileInput.files ? fileInput.files.length : 0
+                });
+                
+                try {
+                    if (fileInput) {
+                        // Enhanced file detection with multiple checks
+                        if (fileInput.files && fileInput.files.length > 0) {
+                            hasFile = true;
+                            selectedFile = fileInput.files[0];
+                            console.log('✅ File found via files property:', {
+                                name: selectedFile.name,
+                                size: selectedFile.size,
+                                type: selectedFile.type
+                            });
+                        } 
+                        // Fallback check for file input value
+                        else if (fileInput.value && fileInput.value.length > 0) {
+                            console.log('⚠️ File input has value but no files array:', fileInput.value);
+                            // Try to get files again after a small delay
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            if (fileInput.files && fileInput.files.length > 0) {
+                                hasFile = true;
+                                selectedFile = fileInput.files[0];
+                                console.log('✅ File found after delay:', selectedFile.name);
+                            } else {
+                                console.log('❌ Still no files after delay');
+                                hasFile = false;
+                            }
+                        }
+                        else {
+                            console.log('❌ No file selected - both files and value are empty');
+                            hasFile = false;
+                        }
+                    } else {
+                        console.log('⚠️ File input element not found');
+                        hasFile = false;
+                    }
+                } catch (fileError) {
+                    console.warn('⚠️ Error checking file input:', fileError);
+                    hasFile = false;
+                }
+
+                console.log('📁 Final file validation result:', {
+                    hasFile: hasFile,
+                    selectedFile: selectedFile ? selectedFile.name : 'None',
+                    fileSize: selectedFile ? selectedFile.size : 0
+                });
+
+                // ENFORCE chart upload requirement
+                if (!hasFile || !selectedFile) {
+                    console.log('❌ Chart upload validation failed');
+                    
+                    // Show detailed error message
+                    let errorMsg = 'Please upload a chart image before analysis. ';
+                    if (fileInput && fileInput.value) {
+                        errorMsg += 'File input detected but file object not accessible. Try refreshing the page.';
+                    } else {
+                        errorMsg += 'No chart image selected.';
+                    }
+                    
+                    this.showMessage(errorMsg, 'error');
+                    return;
+                }
+
+                console.log('✅ Chart file validation passed:', selectedFile.name);
+
+                // Create FormData with chart image
+                const formData = new FormData();
+                
+                try {
+                    formData.append('chart_image', selectedFile);
+                    formData.append('symbol', symbolValue.toUpperCase());
+                    formData.append('timeframe', timeframeInput.value || '1h');
+                    console.log('� FormNData prepared with chart image:', selectedFile.name);
+                } catch (formDataError) {
+                    console.error('❌ Error creating FormData:', formDataError);
+                    this.showMessage('Error preparing request. Please try again.', 'error');
+                    return;
+                }
+
+                // Show loading state
+                if (loadingIndicator) {
+                    loadingIndicator.classList.add('show');
+                }
+                if (analyzeBtn) {
+                    analyzeBtn.disabled = true;
+                }
+
+                try {
+                    console.log('📡 Starting API request:', {
+                        hasFile: hasFile,
+                        fileName: selectedFile ? selectedFile.name : 'No file',
+                        symbol: symbolValue,
+                        timeframe: timeframeInput.value || '1h'
+                    });
+
+                    const response = await fetch('/api/upload-chart-analysis/', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': this.getCSRFToken()
+                        }
+                    });
+
+                    console.log('📨 Response received:', response.status, response.statusText);
+                    
+                    let data;
+                    try {
+                        data = await response.json();
+                        console.log('📊 Response data:', data);
+                    } catch (jsonError) {
+                        console.error('❌ Error parsing JSON response:', jsonError);
+                        throw new Error('Invalid response format from server');
+                    }
+
+                    if (response.ok && data) {
+                        console.log('✅ Analysis successful, displaying results');
+                        
+                        // Try complex display first, fallback to simple
+                        try {
+                            this.displayAnalysisResult(data);
+                            console.log('✅ Complex display successful');
+                        } catch (displayError) {
+                            console.warn('⚠️ Complex display failed, using simple display:', displayError);
+                            this.displaySimpleAnalysisResult(data);
+                        }
+                        
+                        // Show success message
+                        this.showMessage('Chart analyzed successfully with SMC analysis!', 'success');
+                        
+                        // Load recent analyses
+                        try {
+                            this.loadRecentAnalyses();
+                        } catch (recentError) {
+                            console.warn('⚠️ Failed to load recent analyses:', recentError);
+                        }
+                        
+                        // Reset form after successful analysis
+                        if (form) {
+                            try {
+                                form.reset();
+                                this.resetUploadArea();
+                            } catch (resetError) {
+                                console.warn('⚠️ Error resetting form:', resetError);
+                            }
+                        }
+                    } else {
+                        console.error('❌ Analysis failed:', data);
+                        const errorMsg = data && data.error ? data.error : 'Analysis failed';
+                        this.showMessage(errorMsg, 'error');
+                    }
+                } catch (error) {
+                    console.error('❌ Request failed:', error);
+                    this.showMessage('Failed to perform analysis. Please check your connection and try again.', 'error');
+                } finally {
+                    // Always restore UI state
+                    if (loadingIndicator) {
+                        loadingIndicator.classList.remove('show');
+                    }
+                    if (analyzeBtn) {
+                        analyzeBtn.disabled = false;
+                    }
+                }
+            }
+
+            getCSRFToken() {
+                // Get CSRF token from cookie or meta tag
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'csrftoken') {
+                        return value;
+                    }
+                }
+                
+                // Fallback: try to get from meta tag
+                const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                return csrfMeta ? csrfMeta.getAttribute('content') : '';
+            }
+
+            displayAnalysisResult(data) {
+                console.log('📊 Displaying analysis result:', data);
+                
+                const resultsContainer = document.getElementById('analysisResults');
+                if (!resultsContainer) {
+                    console.error('❌ Results container not found');
+                    return;
+                }
+                
+                const analysis = data.analysis || {};
+                const realPrediction = analysis.real_price_prediction || {};
+                const smcAnalysis = realPrediction.smc_analysis || {};
+                const visualAnalysis = analysis.visual_analysis || {};
+                const trendContinuation = realPrediction.trend_continuation || {};
+                const nextDirection = realPrediction.next_direction || {};
+                
+                console.log('📈 Analysis data:', {
+                    direction: realPrediction.direction,
+                    confidence: realPrediction.confidence,
+                    smcBias: smcAnalysis.overall_bias
+                });
+
+                resultsContainer.innerHTML = `
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-symbol">${data.symbol}</div>
+                            <div class="result-time">${new Date(data.uploaded_at).toLocaleString()}</div>
+                        </div>
+                        
+                        <!-- Main Analysis -->
+                        <div class="analysis-grid">
+                            <div class="analysis-item">
+                                <div class="analysis-label">Direction</div>
+                                <div class="analysis-value ${realPrediction.direction === 'UP' ? 'direction-up' : realPrediction.direction === 'DOWN' ? 'direction-down' : ''}">
+                                    <i class="fas fa-arrow-${realPrediction.direction === 'UP' ? 'up' : realPrediction.direction === 'DOWN' ? 'down' : 'right'}"></i>
+                                    ${realPrediction.direction || 'UNKNOWN'}
+                                </div>
+                            </div>
+                            
+                            <div class="analysis-item">
+                                <div class="analysis-label">Confidence</div>
+                                <div class="analysis-value">${Math.round(realPrediction.confidence || 0)}%</div>
+                            </div>
+                            
+                            <div class="analysis-item">
+                                <div class="analysis-label">Current Price</div>
+                                <div class="analysis-value">${realPrediction.current_price || 'N/A'}</div>
+                            </div>
+                            
+                            <div class="analysis-item">
+                                <div class="analysis-label">SMC Bias</div>
+                                <div class="analysis-value ${smcAnalysis.overall_bias === 'BULLISH' ? 'direction-up' : smcAnalysis.overall_bias === 'BEARISH' ? 'direction-down' : ''}">
+                                    ${smcAnalysis.overall_bias || 'NEUTRAL'}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- SMC Analysis Details -->
+                        <div class="smc-section">
+                            <h4 style="margin: 1.5rem 0 1rem 0; color: var(--accent-blue);">
+                                <i class="fas fa-brain"></i> Smart Money Concepts Analysis
+                            </h4>
+                            
+                            <div class="smc-grid">
+                                ${this.renderSMCComponent('Market Structure Shift', smcAnalysis.market_structure_shift)}
+                                ${this.renderSMCComponent('Order Blocks', smcAnalysis.order_blocks)}
+                                ${this.renderSMCComponent('QMLR Pattern', smcAnalysis.qmlr_pattern)}
+                                ${this.renderSMCComponent('Fair Value Gaps', smcAnalysis.fair_value_gaps)}
+                                ${this.renderSMCComponent('Liquidity Sweep', smcAnalysis.liquidity_sweep)}
+                                ${this.renderSMCComponent('Liquidity Grab', smcAnalysis.liquidity_grab)}
+                                ${this.renderSMCComponent('Change of Character', smcAnalysis.change_of_character)}
+                                ${this.renderSMCComponent('Smart Money Divergence', smcAnalysis.smart_money_divergence)}
+                            </div>
+                        </div>
+                        
+                        <!-- Trend Continuation Analysis -->
+                        <div class="trend-section">
+                            <h4 style="margin: 1.5rem 0 1rem 0; color: var(--accent-green);">
+                                <i class="fas fa-chart-line"></i> Trend Continuation Analysis
+                            </h4>
+                            
+                            <div class="analysis-grid">
+                                <div class="analysis-item">
+                                    <div class="analysis-label">Continuation Probability</div>
+                                    <div class="analysis-value">${trendContinuation.probability || 50}%</div>
+                                </div>
+                                
+                                <div class="analysis-item">
+                                    <div class="analysis-label">Strength</div>
+                                     <div class="analysis-value">${trendContinuation.strength || 'MEDIUM'}</div>
+                                </div>
+                                
+                                <div class="analysis-item">
+                                    <div class="analysis-label">Next Direction</div>
+                                    <div class="analysis-value ${nextDirection.direction === 'UP' ? 'direction-up' : nextDirection.direction === 'DOWN' ? 'direction-down' : ''}">
+                                        <i class="fas fa-arrow-${nextDirection.direction === 'UP' ? 'up' : nextDirection.direction === 'DOWN' ? 'down' : 'right'}"></i>
+                                        ${nextDirection.direction || 'SIDEWAYS'}
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-item">
+                                    <div class="analysis-label">Next Confidence</div>
+                                    <div class="analysis-value">${Math.round(nextDirection.confidence || 50)}%</div>
+                                </div>
+                            </div>
+                            
+                            ${trendContinuation.factors && trendContinuation.factors.length > 0 ? `
+                                <div class="factors-list">
+                                    <strong>Supporting Factors:</strong>
+                                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem; color: var(--text-secondary);">
+                                        ${trendContinuation.factors.map(factor => `<li>${factor.replace(/_/g, ' ')}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <!-- Trading Signal -->
+                        <div class="trading-signal">
+                            ${realPrediction.meets_threshold ? 
+                                `<div class="success-message">
+                                    <i class="fas fa-check-circle"></i> 
+                                    <strong>HIGH CONFIDENCE SIGNAL DETECTED!</strong><br>
+                                    Direction: ${realPrediction.direction} | Confidence: ${Math.round(realPrediction.confidence)}%<br>
+                                    SMC Bias: ${smcAnalysis.overall_bias} | Trend Continuation: ${trendContinuation.likely_continuation ? 'LIKELY' : 'UNLIKELY'}
+                                </div>` :
+                                `<div style="text-align: center; color: var(--text-secondary); margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 8px;">
+                                    <i class="fas fa-exclamation-triangle"></i> 
+                                    <strong>LOW CONFIDENCE SETUP</strong><br>
+                                    Wait for better confluence of SMC factors before entering trade
+                                </div>`
+                            }
+                        </div>
+                    </div>
+                `;
+                
+                console.log('✅ Analysis result displayed successfully');
+            }
+            
+            displaySimpleAnalysisResult(data) {
+                console.log('📊 Displaying simple analysis result');
+                
+                const resultsContainer = document.getElementById('analysisResults');
+                const analysis = data.analysis || {};
+                const realPrediction = analysis.real_price_prediction || {};
+                const smcAnalysis = realPrediction.smc_analysis || {};
+                
+                resultsContainer.innerHTML = `
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-symbol">${data.symbol}</div>
+                            <div class="result-time">${new Date().toLocaleString()}</div>
+                        </div>
+                        
+                        <div class="analysis-grid">
+                            <div class="analysis-item">
+                                <div class="analysis-label">Direction</div>
+                                <div class="analysis-value ${realPrediction.direction === 'UP' ? 'direction-up' : realPrediction.direction === 'DOWN' ? 'direction-down' : ''}">
+                                    ${realPrediction.direction || 'UNKNOWN'}
+                                </div>
+                            </div>
+                            
+                            <div class="analysis-item">
+                                <div class="analysis-label">Confidence</div>
+                                <div class="analysis-value">${Math.round(realPrediction.confidence || 0)}%</div>
+                            </div>
+                            
+                            <div class="analysis-item">
+                                <div class="analysis-label">Current Price</div>
+                                <div class="analysis-value">${realPrediction.current_price || 'N/A'}</div>
+                            </div>
+                            
+                            <div class="analysis-item">
+                                <div class="analysis-label">SMC Bias</div>
+                                <div class="analysis-value">${smcAnalysis.overall_bias || 'NEUTRAL'}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                            <h4>📊 Real-time SMC Analysis Complete</h4>
+                            <p>Analysis performed using live price data and Smart Money Concepts without chart image.</p>
+                            <p><strong>Message:</strong> ${data.message}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderSMCComponent(name, data) {
+                if (!data) return '';
+                
+                let status = 'NEUTRAL';
+                let icon = 'fas fa-minus';
+                let details = '';
+                
+                switch(name) {
+                    case 'Market Structure Shift':
+                        status = data.detected ? data.type : 'NONE';
+                        icon = data.detected ? (data.type === 'BULLISH' ? 'fas fa-arrow-up' : 'fas fa-arrow-down') : 'fas fa-minus';
+                        details = data.detected ? `${data.strength} strength` : 'No MSS detected';
+                        break;
+                        
+                    case 'Order Blocks':
+                        status = data.recent_bias || 'NEUTRAL';
+                        icon = data.count > 0 ? 'fas fa-cube' : 'fas fa-minus';
+                        details = `${data.count || 0} blocks found`;
+                        break;
+                        
+                    case 'QMLR Pattern':
+                        status = data.detected ? data.bias : 'NONE';
+                        icon = data.detected ? 'fas fa-mountain' : 'fas fa-minus';
+                        details = data.detected ? 'Pattern detected' : 'No pattern';
+                        break;
+                        
+                    case 'Fair Value Gaps':
+                        status = data.recent_bias || 'NEUTRAL';
+                        icon = data.count > 0 ? 'fas fa-gap' : 'fas fa-minus';
+                        details = `${data.count || 0} gaps found`;
+                        break;
+                        
+                    case 'Liquidity Sweep':
+                        status = data.bias || 'NEUTRAL';
+                        icon = data.count > 0 ? 'fas fa-broom' : 'fas fa-minus';
+                        details = `${data.count || 0} sweeps detected`;
+                        break;
+                        
+                    case 'Liquidity Grab':
+                        status = data.bias || 'NEUTRAL';
+                        icon = data.count > 0 ? 'fas fa-hand-grab' : 'fas fa-minus';
+                        details = `${data.count || 0} grabs detected`;
+                        break;
+                        
+                    case 'Change of Character':
+                        status = data.detected ? data.type : 'NONE';
+                        icon = data.detected ? 'fas fa-exchange-alt' : 'fas fa-minus';
+                        details = data.detected ? `${data.strength} change` : 'No change detected';
+                        break;
+                        
+                    case 'Smart Money Divergence':
+                        status = data.bias || 'NEUTRAL';
+                        icon = data.detected ? 'fas fa-chart-line' : 'fas fa-minus';
+                        details = data.detected ? 'Divergence detected' : 'No divergence';
+                        break;
+                }
+                
+                const statusClass = status === 'BULLISH' ? 'direction-up' : 
+                                  status === 'BEARISH' ? 'direction-down' : '';
+                
+                return `
+                    <div class="smc-item">
+                        <div class="smc-name">
+                            <i class="${icon}"></i>
+                            ${name}
+                        </div>
+                        <div class="smc-status ${statusClass}">${status}</div>
+                        <div class="smc-details">${details}</div>
+                    </div>
+                `;
+            }
+
+            async loadRecentAnalyses() {
+                try {
+                    const response = await fetch('/api/chart-analyses/?limit=5');
+                    const data = await response.json();
+
+                    if (response.ok && data.length > 0) {
+                        this.displayRecentAnalyses(data);
+                    }
+                } catch (error) {
+                    console.error('Failed to load recent analyses:', error);
+                }
+            }
+
+            displayRecentAnalyses(analyses) {
+                const container = document.getElementById('recentAnalyses');
+                
+                container.innerHTML = analyses.map(analysis => `
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div class="result-symbol">${analysis.symbol}</div>
+                            <div class="result-time">${new Date(analysis.uploaded_at).toLocaleString()}</div>
+                        </div>
+                        
+                        <div class="analysis-grid">
+                            <div class="analysis-item">
+                                <div class="analysis-label">Direction</div>
+                                <div class="analysis-value ${analysis.real_price_prediction.direction === 'UP' ? 'direction-up' : 'direction-down'}">
+                                    ${analysis.real_price_prediction.direction || 'UNKNOWN'}
+                                </div>
+                            </div>
+                            
+                            <div class="analysis-item">
+                                <div class="analysis-label">Confidence</div>
+                                <div class="analysis-value">${analysis.real_price_prediction.confidence || 0}%</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            resetUploadArea() {
+                const uploadArea = document.getElementById('uploadArea');
+                uploadArea.innerHTML = `
+                    <div class="upload-icon">
+                        <i class="fas fa-image"></i>
+                    </div>
+                    <h3>Drop your chart image here (Required)</h3>
+                    <p>or click to browse files</p>
+                    <p style="font-size: 0.85rem; color: var(--accent-red); margin-top: 0.5rem;">
+                        ⚠️ Chart image upload is required for analysis
+                    </p>
+                    <input type="file" id="chartFile" name="chart_image" accept="image/*" style="display: none;">
+                `;
+                
+                // Re-attach event listeners after reset
+                this.attachFileInputListeners();
+            }
+
+            showMessage(message, type) {
+                const existingMessage = document.querySelector('.error-message, .success-message');
+                if (existingMessage) {
+                    existingMessage.remove();
+                }
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `${type}-message`;
+                messageDiv.textContent = message;
+                
+                const form = document.getElementById('chartUploadForm');
+                form.appendChild(messageDiv);
+                
+                setTimeout(() => {
+                    messageDiv.remove();
+                }, 5000);
+            }
+        }
+
+        // Chart upload is now required - no bypass functions
+
+        // Simple result display function
+        function displaySimpleResult(data) {
+            const resultsContainer = document.getElementById('analysisResults');
+            if (!resultsContainer) return;
+            
+            const analysis = data.analysis || {};
+            const realPrediction = analysis.real_price_prediction || {};
+            const smcAnalysis = realPrediction.smc_analysis || {};
+            
+            resultsContainer.innerHTML = `
+                <div style="background: rgba(255,255,255,0.08); border-radius: 16px; padding: 2rem; border: 1px solid rgba(255,255,255,0.12);">
+                    <h3 style="color: #10b981; margin-bottom: 1rem;">
+                        <i class="fas fa-check-circle"></i> SMC Analysis Complete
+                    </h3>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="text-align: center; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: #cbd5e1; margin-bottom: 0.5rem;">Direction</div>
+                            <div style="font-size: 1.2rem; font-weight: 600; color: ${realPrediction.direction === 'UP' ? '#10b981' : realPrediction.direction === 'DOWN' ? '#ef4444' : '#f8fafc'};">
+                                ${realPrediction.direction || 'UNKNOWN'}
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: #cbd5e1; margin-bottom: 0.5rem;">Confidence</div>
+                            <div style="font-size: 1.2rem; font-weight: 600;">${Math.round(realPrediction.confidence || 0)}%</div>
+                        </div>
+                        
+                        <div style="text-align: center; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: #cbd5e1; margin-bottom: 0.5rem;">Current Price</div>
+                            <div style="font-size: 1.2rem; font-weight: 600;">${realPrediction.current_price || 'N/A'}</div>
+                        </div>
+                        
+                        <div style="text-align: center; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: #cbd5e1; margin-bottom: 0.5rem;">SMC Bias</div>
+                            <div style="font-size: 1.2rem; font-weight: 600; color: ${smcAnalysis.overall_bias === 'BULLISH' ? '#10b981' : smcAnalysis.overall_bias === 'BEARISH' ? '#ef4444' : '#f8fafc'};">
+                                ${smcAnalysis.overall_bias || 'NEUTRAL'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 1rem;">
+                        <h4 style="color: #3b82f6; margin-bottom: 0.5rem;">
+                            <i class="fas fa-info-circle"></i> Real-time SMC Analysis
+                        </h4>
+                        <p style="margin: 0; color: #cbd5e1; font-size: 0.9rem;">
+                            Analysis performed using live price data and Smart Money Concepts without chart image.
+                            <br><strong>Symbol:</strong> ${data.symbol} | <strong>Message:</strong> ${data.message}
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Simple message display function
+        function showSimpleMessage(message, type) {
+            const existingMessage = document.querySelector('.simple-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'simple-message';
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 1000;
+                background: ${type === 'success' ? '#10b981' : '#ef4444'};
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            window.chartAnalyzer = new ChartAnalyzer();
+            console.log('✅ ChartAnalyzer initialized and stored in window.chartAnalyzer');
+        });
+    </script>
+</body>
+</html>

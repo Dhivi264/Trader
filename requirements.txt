@@ -1,0 +1,20 @@
+# ULTRA-LIGHTWEIGHT FOR PYTHONANYWHERE (512MB LIMIT)
+# Total size: ~27MB (leaves 485MB for your code and data)
+
+# Core Django Framework (~15MB)
+Django==4.2.7
+djangorestframework==3.14.0
+
+# Essential Image Processing (~8MB)
+Pillow==10.0.1
+
+# External APIs (~3MB)
+requests==2.31.0
+
+# Configuration (~1MB)
+python-decouple==3.8
+
+# REMOVED TO SAVE SPACE (but code will handle gracefully):
+# django-cors-headers (add CORS manually if needed)
+# numpy/pandas (SMC analysis will use basic Python calculations)
+# opencv-python-headless (visual analysis will use Pillow only)
