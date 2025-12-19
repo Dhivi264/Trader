@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -9,6 +10,21 @@ import logging
 import os
 
 logger = logging.getLogger(__name__)
+
+
+def add_cors_headers(response):
+    """Add CORS headers manually for PythonAnywhere compatibility"""
+    response['Access-Control-Allow-Origin'] = '*'
+    response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With'
+    response['Access-Control-Allow-Credentials'] = 'true'
+    return response
+
+
+def cors_response(data, status_code=200):
+    """Create a Response with CORS headers"""
+    response = Response(data, status=status_code)
+    return add_cors_headers(response)
 
 
 def index(request):
@@ -30,17 +46,17 @@ def upload_chart_analysis(request):
         
         # Validate symbol
         if not symbol or symbol == 'UNKNOWN' or symbol.strip() == '':
-            return Response({'error': 'Please provide a valid trading symbol (e.g., EURUSD, GBPUSD)'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
+            return cors_response({'error': 'Please provide a valid trading symbol (e.g., EURUSD, GBPUSD)'}, 
+                          status.HTTP_400_BAD_REQUEST)
         
         symbol = symbol.upper().strip()
         
         # REQUIRE chart image upload
         if 'chart_image' not in request.FILES or not request.FILES['chart_image']:
-            return Response({
+            return cors_response({
                 'error': 'Chart image is required. Please upload a chart image to perform analysis.',
                 'message': 'You must upload a trading chart image before analysis can be performed.'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status.HTTP_400_BAD_REQUEST)
         
         chart_file = request.FILES['chart_image']
         
@@ -49,13 +65,13 @@ def upload_chart_analysis(request):
         file_extension = os.path.splitext(chart_file.name)[1].lower()
         
         if file_extension not in allowed_extensions:
-            return Response({'error': 'Invalid file type. Please upload JPG, PNG, or BMP images.'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
+            return cors_response({'error': 'Invalid file type. Please upload JPG, PNG, or BMP images.'}, 
+                          status.HTTP_400_BAD_REQUEST)
         
         # Validate file size (max 10MB)
         if chart_file.size > 10 * 1024 * 1024:
-            return Response({'error': 'File too large. Maximum size is 10MB.'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
+            return cors_response({'error': 'File too large. Maximum size is 10MB.'}, 
+                          status.HTTP_400_BAD_REQUEST)
         
         # Create ChartUpload instance
         chart_upload = ChartUpload.objects.create(
@@ -79,7 +95,7 @@ def upload_chart_analysis(request):
         chart_upload.analysis_completed = True
         chart_upload.save()
         
-        return Response({
+        return cors_response({
             'success': True,
             'chart_id': chart_upload.id,
             'symbol': chart_upload.symbol,
@@ -93,8 +109,8 @@ def upload_chart_analysis(request):
         logger.error(f"Chart upload analysis error: {e}")
         import traceback
         logger.error(f"Full traceback: {traceback.format_exc()}")
-        return Response({'error': f'Failed to analyze chart: {str(e)}'}, 
-                       status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return cors_response({'error': f'Failed to analyze chart: {str(e)}'}, 
+                       status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # Removed perform_realtime_smc_analysis function - chart upload is now required
@@ -143,12 +159,12 @@ def get_chart_analyses(request):
                 'data_source': 'REAL_API_DATA'
             })
         
-        return Response(data)
+        return cors_response(data)
         
     except Exception as e:
         logger.error(f"Error fetching chart analyses: {e}")
-        return Response({'error': 'Failed to fetch chart analyses'}, 
-                       status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return cors_response({'error': 'Failed to fetch chart analyses'}, 
+                       status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
@@ -160,7 +176,7 @@ def get_chart_analysis_detail(request, chart_id):
     try:
         chart_upload = ChartUpload.objects.get(id=chart_id)
         
-        return Response({
+        return cors_response({
             'id': chart_upload.id,
             'symbol': chart_upload.symbol,
             'timeframe': chart_upload.timeframe,
@@ -174,12 +190,12 @@ def get_chart_analysis_detail(request, chart_id):
         })
         
     except ChartUpload.DoesNotExist:
-        return Response({'error': 'Chart analysis not found'}, 
-                       status=status.HTTP_404_NOT_FOUND)
+        return cors_response({'error': 'Chart analysis not found'}, 
+                       status.HTTP_404_NOT_FOUND)
     except Exception as e:
         logger.error(f"Error fetching chart analysis detail: {e}")
-        return Response({'error': 'Failed to fetch chart analysis detail'}, 
-                       status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return cors_response({'error': 'Failed to fetch chart analysis detail'}, 
+                       status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['DELETE'])
@@ -192,12 +208,12 @@ def delete_chart_analysis(request, chart_id):
         chart_upload = ChartUpload.objects.get(id=chart_id)
         chart_upload.delete()  # This will also delete the image file
         
-        return Response({'success': True, 'message': 'Chart analysis deleted successfully'})
+        return cors_response({'success': True, 'message': 'Chart analysis deleted successfully'})
         
     except ChartUpload.DoesNotExist:
-        return Response({'error': 'Chart analysis not found'}, 
-                       status=status.HTTP_404_NOT_FOUND)
+        return cors_response({'error': 'Chart analysis not found'}, 
+                       status.HTTP_404_NOT_FOUND)
     except Exception as e:
         logger.error(f"Error deleting chart analysis: {e}")
-        return Response({'error': 'Failed to delete chart analysis'}, 
-                       status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return cors_response({'error': 'Failed to delete chart analysis'}, 
+                       status.HTTP_500_INTERNAL_SERVER_ERROR)

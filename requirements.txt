@@ -14,7 +14,7 @@ requests==2.31.0
 # Configuration (~1MB)
 python-decouple==3.8
 
-# REMOVED TO SAVE SPACE (but code will handle gracefully):
-# django-cors-headers (add CORS manually if needed)
-# numpy/pandas (SMC analysis will use basic Python calculations)
-# opencv-python-headless (visual analysis will use Pillow only)
+# REMOVED TO SAVE SPACE (but code handles gracefully):
+# django-cors-headers (CORS headers added manually in views.py)
+# numpy/pandas (SMC analysis uses compatibility_layer.py)
+# opencv-python-headless (visual analysis uses Pillow only)
