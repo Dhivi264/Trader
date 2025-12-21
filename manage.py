@@ -10,7 +10,10 @@ def main():
     BASE_DIR = Path(__file__).resolve().parent
     sys.path.insert(0, str(BASE_DIR / 'quotex_predictor'))
     
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'quotex_predictor.settings')
+    os.environ.setdefault(
+    'DJANGO_SETTINGS_MODULE',
+    'quotex_predictor.quotex_predictor.settings'
+    )
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
