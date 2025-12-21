@@ -5,11 +5,8 @@ import sys
 from pathlib import Path
 
 def main():
-    """Run administrative tasks."""
-    # Add the quotex_predictor directory to Python path
-    BASE_DIR = Path(__file__).resolve().parent
-    sys.path.insert(0, str(BASE_DIR / 'quotex_predictor'))
-    
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, os.path.join(BASE_DIR, "quotex_predictor"))
     os.environ.setdefault(
     'DJANGO_SETTINGS_MODULE',
     'quotex_predictor.quotex_predictor.settings'
