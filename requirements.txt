@@ -2,7 +2,6 @@ Django==5.0.6
 djangorestframework
 python-dotenv
 python-decouple
-
 gunicorn
 requests
 pandas
